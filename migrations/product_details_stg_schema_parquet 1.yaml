@@ -1,0 +1,56 @@
+version: "1.2"
+
+metadata:
+  name: "product_details_ingestion"
+  owner: "data-eng-team"
+  description: "Load Iris flower dataset from Parquet files"
+
+datasets:
+  - name: "product_details_ingestion"
+    source:
+      type: "s3"
+      file_pattern: ".*\\.parquet"
+      bucket: "datalake-dev-dtrai-rawlayer-in-com-sy"
+
+    target:
+      type: "snowflake"
+      database: "DRAI_INGESTION_DATABASE"
+      schema: "DRAI_ING_SCHEMA"
+      table: "PRODUCT_DETAILS"
+
+      stage:
+        name: "DRAI_S3_EXTERNAL_STAGE_INBOUND"
+        path: "product_details_parquet/"
+        file_format: "DRAI_PARQUET_FORMAT"
+        validate: true
+
+      # Updated schema to match your Parquet file
+      schema_definition:
+        model: VARCHAR
+        mpg: FLOAT
+        cyl: VARCHAR
+        disp: NUMBER
+        hp: VARCHAR
+        drat: FLOAT
+        wt: FLOAT
+        qsec: FLOAT
+        vs: VARCHAR
+        am: VARCHAR
+        gear: VARCHAR
+        carb: VARCHAR
+
+    ingestion:
+      method: "copy_into"
+      copy_options:
+        load_strategy: "DROP_AND_CREATE"  #TRUNCATE_AND_LOAD, DROP_AND_CREATE
+        file_pattern: ".*\\.parquet"
+        validation_mode: false
+        purge: false
+        force: false
+        multi_file: true
+        on_error: "CONTINUE"
+
+audit:
+  enabled: true
+  table: "INGESTION_AUDIT_LOG"
+  schema: "DRAI_ING_SCHEMA"
