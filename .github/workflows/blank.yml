@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Diagnostics: show workspace (debug)
+      - name: Diagnostics:show workspace (debug)
         run: |
           echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
           pwd
