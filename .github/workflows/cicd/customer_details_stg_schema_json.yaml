@@ -1,0 +1,61 @@
+version: "1.2"
+
+metadata:
+  name: "customer_details_ingestion"
+  owner: "data-eng-team"
+
+datasets:
+  - name: "customer_details_ingestion"
+    source:
+      type: "s3"
+      file_pattern: ".*/.json"
+      bucket: "datalake-dev-dtrai-rawlayer-in-com-sy"
+
+    target:
+      type: "snowflake"
+      database: "DRAI_INGESTION_DATABASE"
+      schema: "DRAI_ING_SCHEMA"
+      table: "CUSTOMER_DETAILS"
+
+      stage:
+        name: "DRAI_S3_EXTERNAL_STAGE_INBOUND"
+        path: "customer_data_json/"
+        file_format: "DRAI_JSON_FORMAT"
+
+      # Define flattened schema
+      schema_definition:
+          customer_id: "NUMBER"
+          first_name: "VARCHAR"
+          last_name: "VARCHAR" 
+          email: "VARCHAR"
+          phone: "VARCHAR"
+          address: "VARCHAR"
+          city: "VARCHAR"
+          state: "VARCHAR"
+          zip_code: "VARCHAR"
+          created_date: "TIMESTAMP"
+          status: "VARCHAR"
+          
+    ingestion:
+      method: "copy_into"
+      copy_options:
+        load_strategy: "DROP_AND_CREATE"  #TRUNCATE_AND_LOAD, DROP_AND_CREATE
+        file_pattern: ".*/.json"
+        validation_mode: false
+        purge: false
+        force: false
+        multi_file: true
+        on_error: "CONTINUE"
+    
+
+    # Use a post-load transformation (you'd need to modify the stored procedure)
+    post_processing:
+      - action: "flatten_json"
+        target_column: "customer"
+        
+audit:
+  enabled: true
+  table: "INGESTION_AUDIT_LOG"
+  schema: "DRAI_ING_SCHEMA"
+
+
